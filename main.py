@@ -9,6 +9,8 @@ from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt, pyqtSignal
 from organizer import organize_files
 
+from email_notifier import send_summary_mail
+
 # Matplotlib for chart embedding
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -200,9 +202,17 @@ class FileOrganizerApp(QWidget):
             self.log_signal.emit(logs)
             self.analytics_signal.emit(analytics)
             self.status_signal.emit("✅ Completed!")
-
+            
+         # Safe email sending with error handling
+            try:
+                send_summary_mail("abhishektues@gmail.com", analytics)
+                self.status_signal.emit("📧 Email report sent successfully!")
+            except Exception as e:
+                self.status_signal.emit(f"⚠️ Email failed: {e}")
+        
         thread = threading.Thread(target=run)
         thread.start()
+
 
     def emit_progress(self, percent, text):
         # called from worker thread
