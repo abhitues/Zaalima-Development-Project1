@@ -1,5 +1,6 @@
 PyQt5>=5.15.0
 matplotlib>=3.5.0
+python-dotenv>=1.0.0
 
 # Optional security dependencies (for antivirus scanning)
 # pyclamd>=1.0.0  # Uncomment if you have ClamAV installed

@@ -51,6 +51,9 @@ EMAIL_CONFIG = {
     "recipient_email": ""
 }
 
+# Last error captured during email send (for UI diagnostics)
+EMAIL_LAST_ERROR: str = ""
+
 def load_email_config():
     """Load email configuration from a file if it exists."""
     config_file = Path("email_config.txt")
@@ -88,6 +91,8 @@ def send_email_notification(subject: str, body: str) -> bool:
     if not EMAIL_CONFIG["sender_email"] or not EMAIL_CONFIG["recipient_email"]:
         return False
     
+    global EMAIL_LAST_ERROR
+    EMAIL_LAST_ERROR = ""
     try:
         # Create message
         msg = MIMEMultipart()
@@ -98,8 +103,14 @@ def send_email_notification(subject: str, body: str) -> bool:
         msg.attach(MIMEText(body, "plain"))
         
         # Connect to SMTP server
-        server = smtplib.SMTP(EMAIL_CONFIG["smtp_server"], EMAIL_CONFIG["smtp_port"])
-        server.starttls()
+        server = smtplib.SMTP(EMAIL_CONFIG["smtp_server"], EMAIL_CONFIG["smtp_port"], timeout=20)
+        server.ehlo()
+        try:
+            server.starttls()
+            server.ehlo()
+        except Exception:
+            # If STARTTLS not supported, proceed without it
+            pass
         server.login(EMAIL_CONFIG["sender_email"], EMAIL_CONFIG["sender_password"])
         
         # Send email
@@ -107,7 +118,8 @@ def send_email_notification(subject: str, body: str) -> bool:
         server.quit()
         return True
     except Exception as e:
-        print(f"Email send failed: {e}")
+        EMAIL_LAST_ERROR = str(e)
+        print(f"Email send failed: {EMAIL_LAST_ERROR}")
         return False
 
 def send_scan_report(scan_results: List[dict], mime_results: List[dict], folder_path: str):

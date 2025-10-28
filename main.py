@@ -641,9 +641,13 @@ Configure these settings in the Settings page."""
                     "Test email sent successfully!\nPlease check your inbox."
                 )
             else:
+                detail = security.EMAIL_LAST_ERROR or "Unknown error"
                 QMessageBox.warning(
                     self, "Failed",
-                    "Failed to send test email.\nPlease check your configuration."
+                    f"Failed to send test email.\n\nDetails: {detail}\n\n"
+                    "Tips:\n- Use a Gmail App Password (not your normal password)\n"
+                    "- Ensure SMTP server/port are correct (smtp.gmail.com:587)\n"
+                    "- Check internet/firewall/proxy settings"
                 )
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to send test email: {e}")
