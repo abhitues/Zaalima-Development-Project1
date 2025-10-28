@@ -3,6 +3,7 @@ import shutil
 import time
 from pathlib import Path
 import mimetypes
+import security
 
 # Basic categories (you can extend)
 FILE_CATEGORIES = {
@@ -26,10 +27,11 @@ def get_category(extension: str) -> str:
             return main_type.capitalize() + "s"
     return "Others"
 
-def organize_files(folder_path, progress_callback=None):
+def organize_files(folder_path, progress_callback=None, enable_security=True):
     """
-    Organize files in folder_path.
+    Organize files in folder_path with optional security scanning.
     progress_callback(percent:int, text:str) -> used to report progress.
+    enable_security: If True, scan files for threats before organizing.
     Returns: (logs:list[str], analytics:dict)
     """
     start = time.time()
@@ -42,7 +44,13 @@ def organize_files(folder_path, progress_callback=None):
         "total_files": total,
         "total_size_bytes": 0,
         "categories": {},   # e.g. {"Images": 10, "Documents": 5}
-        "time_taken_sec": 0.0
+        "time_taken_sec": 0.0,
+        "security_scan": {
+            "scanned": 0,
+            "infected": 0,
+            "quarantined": 0,
+            "clean": 0
+        }
     }
 
     # If no files, return empty analytics quickly
@@ -54,6 +62,29 @@ def organize_files(folder_path, progress_callback=None):
 
     for i, file in enumerate(files, start=1):
         try:
+            # Security scanning
+            if enable_security:
+                if progress_callback:
+                    progress_callback(int((i / total) * 50), f"🔒 Scanning {file.name}...")
+                
+                scan_result = security.scan_file(str(file))
+                analytics["security_scan"]["scanned"] += 1
+                
+                if scan_result.get("infected", False):
+                    # File is infected - move to quarantine instead
+                    try:
+                        qpath = security.move_to_quarantine(str(file))
+                        logs.append(f"🚨 THREAT DETECTED & QUARANTINED: {file.name} → {scan_result.get('detail', 'virus')}")
+                        analytics["security_scan"]["infected"] += 1
+                        analytics["security_scan"]["quarantined"] += 1
+                    except Exception as e:
+                        logs.append(f"🚨 INFECTED: {file.name} (quarantine failed: {e})")
+                    continue  # Skip organizing this file
+                else:
+                    analytics["security_scan"]["clean"] += 1
+                    logs.append(f"✓ Security check passed: {file.name}")
+
+            # File organization
             ext = file.suffix
             size = file.stat().st_size
             analytics["total_size_bytes"] += size
@@ -61,6 +92,9 @@ def organize_files(folder_path, progress_callback=None):
             category = get_category(ext)
             analytics["categories"].setdefault(category, 0)
             analytics["categories"][category] += 1
+
+            if progress_callback:
+                progress_callback(int((i / total) * 50) + 50, f"📁 Organizing {file.name}...")
 
             dest_dir = folder / category
             dest_dir.mkdir(exist_ok=True)
@@ -70,14 +104,19 @@ def organize_files(folder_path, progress_callback=None):
         except Exception as e:
             logs.append(f"Error moving {file.name}: {e}")
 
-        # report progress
-        if progress_callback and total:
-            percent = int((i / total) * 100)
-            progress_callback(percent, f"Processing {file.name} ({percent}%)")
-
     analytics["time_taken_sec"] = round(time.time() - start, 3)
+    
+    # Add security summary to logs if security was enabled
+    if enable_security:
+        sec_info = analytics["security_scan"]
+        if sec_info["infected"] > 0:
+            logs.insert(0, f"⚠️ Security Alert: {sec_info['infected']} threat(s) detected and quarantined!")
+        logs.insert(0, f"🔒 Security: {sec_info['clean']} files scanned and verified safe.")
+    
     # final progress
     if progress_callback:
         progress_callback(100, f"Completed — {analytics['total_files']} files")
+        if enable_security and analytics["security_scan"]["infected"] > 0:
+            progress_callback(100, f"⚠️ {analytics['security_scan']['infected']} threat(s) quarantined!")
 
     return logs, analytics
