@@ -33,7 +33,7 @@ def send_summary_mail(receiver_email, analytics):
     message.attach(MIMEText(body, "plain"))
 
     # Send mail
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+    with smtplib.SMTP_SSL("smtp.gmail.com", 587) as server:
         server.login(sender, app_password)
         server.send_message(message)
 

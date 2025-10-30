@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt, pyqtSignal
 from organizer import organize_files
+from email_notifier import send_summary_mail
 import security
 
 # Matplotlib for chart embedding
