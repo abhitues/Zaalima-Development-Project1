@@ -118,5 +118,23 @@ def organize_files(folder_path, progress_callback=None, enable_security=True):
         progress_callback(100, f"Completed — {analytics['total_files']} files")
         if enable_security and analytics["security_scan"]["infected"] > 0:
             progress_callback(100, f"⚠️ {analytics['security_scan']['infected']} threat(s) quarantined!")
+    # --- Generate Analytics Chart (Pie chart of file categories) ---
+    if analytics["categories"]:
+        try:
+            labels = list(analytics["categories"].keys())
+            sizes = list(analytics["categories"].values())
+
+            plt.figure(figsize=(6, 6))
+            plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
+            plt.title("File Category Distribution")
+
+            # ✅ Save chart as image for email attachment
+            plt.savefig("analytics.png")
+            plt.close()
+            
+            logs.append("📊 Analytics chart saved as analytics.png")
+        except Exception as e:
+            logs.append(f"⚠️ Failed to generate chart: {e}")
+
 
     return logs, analytics

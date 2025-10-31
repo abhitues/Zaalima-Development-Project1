@@ -437,6 +437,8 @@ class FileOrganizerApp(QWidget):
         if not categories:
             ax.text(0.5, 0.5, "No data", horizontalalignment='center', verticalalignment='center')
             self.canvas.draw()
+            self.canvas.figure.savefig("analytics.png")
+
             return
 
         labels = list(categories.keys())

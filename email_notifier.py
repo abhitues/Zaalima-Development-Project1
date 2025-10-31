@@ -3,6 +3,8 @@ def send_summary_mail(receiver_email, analytics):
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
+    from email.mime.image import MIMEImage
+
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -31,9 +33,17 @@ def send_summary_mail(receiver_email, analytics):
     """
 
     message.attach(MIMEText(body, "plain"))
+    # ✅ Attach the analytics chart image
+try:
+    with open("analytics.png", "rb") as f:
+        img_data = f.read()
+        message.attach(MIMEImage(img_data, name="analytics.png"))
+except FileNotFoundError:
+    print("⚠️ analytics.png not found — skipping image attachment.")
+
 
     # Send mail
-    with smtplib.SMTP_SSL("smtp.gmail.com", 587) as server:
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(sender, app_password)
         server.send_message(message)
 
