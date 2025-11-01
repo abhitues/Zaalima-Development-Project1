@@ -5,16 +5,24 @@ def send_summary_mail(receiver_email, analytics):
     from email.mime.multipart import MIMEMultipart
     from dotenv import load_dotenv
 
+    # Load environment variables from .env file
     load_dotenv()
+
+    # ✅ Get values from environment variables
     sender = os.getenv("EMAIL_USER")
     app_password = os.getenv("EMAIL_PASS")
 
+    # Check if they loaded correctly
+    if not sender or not app_password:
+        print("❌ Email or password not found in .env file!")
+        return
+
+    # Create the email
     message = MIMEMultipart("alternative")
     message["Subject"] = "📊 File Organizer Summary Report"
     message["From"] = sender
     message["To"] = receiver_email
 
-    # ✅ Fix the wrong key names
     total_size_mb = analytics.get("total_size_bytes", 0) / (1024 * 1024)
     total_files = analytics.get("total_files", 0)
     time_taken = analytics.get("time_taken_sec", 0)
@@ -22,7 +30,7 @@ def send_summary_mail(receiver_email, analytics):
 
     body = f"""
     ✅ File Organization Summary
-    
+
     Total Files Organized: {total_files}
     Total Size: {total_size_mb:.2f} MB
     Time Taken: {time_taken:.2f} sec
@@ -32,9 +40,11 @@ def send_summary_mail(receiver_email, analytics):
 
     message.attach(MIMEText(body, "plain"))
 
-    # Send mail
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(sender, app_password)
-        server.send_message(message)
-
-    print("📧 Email sent successfully!")
+    # ✅ Send the email
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, app_password)
+            server.send_message(message)
+        print("📧 Email sent successfully!")
+    except Exception as e:
+        print("❌ Email failed:", e)

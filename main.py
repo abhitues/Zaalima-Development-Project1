@@ -1,5 +1,7 @@
 import sys
 import threading
+from email_notifier import send_summary_mail  # adjust filename if different
+
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton,
     QFileDialog, QProgressBar, QTextEdit, QHBoxLayout, QListWidget,
@@ -256,6 +258,19 @@ class FileOrganizerApp(QWidget):
 
         # switch to Analytics page automatically (optional)
         self.sidebar.setCurrentRow(2)  # index for Analytics page
+                # send analytics summary email
+               # ✅ send mail ONCE here, after organizing is done
+        try:
+            send_summary_mail("anjanajoy82@gmail.com", analytics)
+            print("📧 Email sent successfully!")
+            print("📧 Summary email sent successfully!")
+            
+            # show inside app too
+            self.status_signal.emit("📧 Email sent successfully!\n📧 Summary email sent successfully!")
+        except Exception as e:
+            print("❌ Failed to send summary email:", e)
+            self.status_signal.emit(f"❌ Failed to send summary email: {e}")
+
 
     def draw_pie_chart(self, categories: dict):
         ax = self.canvas.axes
@@ -280,3 +295,9 @@ if __name__ == "__main__":
     win = FileOrganizerApp()
     win.show()
     sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    win = FileOrganizerApp()
+    win.show()
+    sys.exit(app.exec_())
+
