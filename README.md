@@ -2,6 +2,9 @@
 	About Of Project.
 
 •	Our Project is work on file organization in python language. It is done all file organize in your pc (personal computer) and notified on your E-mail side and delete duplicate file in your folder. Calculate of all type of file and display it. And also present in digital platform on pie chart.     
+<img width="993" height="636" alt="Screenshot 2025-11-01 130233" src="https://github.com/user-attachments/assets/054af469-5339-495e-b74d-03961f03c72c" />
+
+
 
 	If You Have not PyQt5, plyer, matplotlib, python-dotenv in your pc Run This Command in cmd.
 
