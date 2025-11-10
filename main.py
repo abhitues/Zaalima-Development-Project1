@@ -11,6 +11,10 @@ from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import Qt, pyqtSignal
 from organizer import organize_files
 
+from email_notifier import send_summary_mail
+from duplicate_detector import find_duplicates
+
+
 # Matplotlib for chart embedding
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -124,6 +128,11 @@ class FileOrganizerApp(QWidget):
         self.status = QLabel("")
         h_layout.addWidget(self.status, alignment=Qt.AlignCenter)
 
+        self.duplicate_btn = QPushButton("🧩 Find Duplicate Files")
+        self.duplicate_btn.clicked.connect(self.find_duplicate_files)
+        h_layout.addWidget(self.duplicate_btn, alignment=Qt.AlignCenter)
+
+
         # quick analytics summary under the progress
         self.quick_stats = QLabel("")
         self.quick_stats.setWordWrap(True)
@@ -202,9 +211,53 @@ class FileOrganizerApp(QWidget):
             self.log_signal.emit(logs)
             self.analytics_signal.emit(analytics)
             self.status_signal.emit("✅ Completed!")
-
+            
+         # Safe email sending with error handling
+            try:
+                send_summary_mail("abhishektues@gmail.com", analytics)
+                self.status_signal.emit("📧 Email report sent successfully!")
+            except Exception as e:
+                self.status_signal.emit(f"⚠️ Email failed: {e}")
+        
         thread = threading.Thread(target=run)
         thread.start()
+    
+    def find_duplicate_files(self):
+        if not self.folder_path:
+           QMessageBox.warning(self, "Warning", "Please select a folder first!")
+           return
+
+        self.status.setText("🔍 Scanning for duplicate files...")
+        self.progress.setValue(0)
+
+    # ✅ define inner thread function
+        def run():
+            try:
+            # find duplicates using helper function
+                duplicates = find_duplicates(self.folder_path)
+
+                if not duplicates:
+                  self.status_signal.emit("✅ No duplicate files found!")
+                  return
+
+            # Prepare result text
+                report = "⚠️ Duplicate Files Found:\n\n"
+                for i, (hash_val, files) in enumerate(duplicates.items(), start=1):
+                    report += f"\nSet {i}:\n" + "\n".join(f"  - {f}" for f in files)
+
+            # show results safely
+                self.log_signal.emit([report])
+                self.status_signal.emit("⚠️ Duplicate files detected — see Logs tab for details.")
+                self.sidebar.setCurrentRow(1)  # switch to Logs tab
+
+            except Exception as e:
+                self.status_signal.emit(f"❌ Error finding duplicates: {e}")
+
+        # ✅ run it in a separate thread
+        thread = threading.Thread(target=run)
+        thread.start()
+
+
 
     def emit_progress(self, percent, text):
         # called from worker thread

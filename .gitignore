@@ -1,1 +1,10 @@
+<<<<<<< HEAD
 .env
+# =======
+# __pycache__/organizer.cpython-312.pyc
+# __pycache__/email_notifier.cpython-312.pyc
+# assets/Git-2.51.1-64-bit.exe
+
+__pycache__/organizer.cpython-312.pyc
+__pycache__/email_notifier.cpython-312.pyc
+assets/Git-2.51.1-64-bit.exe

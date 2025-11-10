@@ -20,9 +20,10 @@ def send_summary_mail(receiver_email, analytics):
     # Create the email
     message = MIMEMultipart("alternative")
     message["Subject"] = "📊 File Organizer Summary Report"
-    message["From"] = sender
-    message["To"] = receiver_email
+    message["From"] = "anjanajoy82@gmail.com"
+    message["To"] = "anjanajoy82@gmail.com"
 
+    # ✅ Correct key names from analytics
     total_size_mb = analytics.get("total_size_bytes", 0) / (1024 * 1024)
     total_files = analytics.get("total_files", 0)
     time_taken = analytics.get("time_taken_sec", 0)
@@ -40,7 +41,7 @@ def send_summary_mail(receiver_email, analytics):
 
     message.attach(MIMEText(body, "plain"))
 
-    # ✅ Send the email
+    # ✅ Send the email safely
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender, app_password)
